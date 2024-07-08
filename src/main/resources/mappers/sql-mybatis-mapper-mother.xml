@@ -1,0 +1,352 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+
+<mapper namespace="MotherDAO_mybatis">
+
+    <resultMap id="helperResult" type="HelperVO">
+
+        <id property="helper_id" column="helper_id"/>
+        <result property="helper_password" column="helper_password"/>
+        <result property="helper_name" column="helper_name"/>
+        <result property="helper_email" column="helper_email"/>
+        <result property="helper_tel" column="helper_tel"/>
+        <result property="helper_address" column="helper_address"/>
+        <result property="helper_address_detail" column="helper_address_detail"/>
+        <result property="helper_address_postcode" column="helper_address_postcode"/>
+        <result property="helper_birth" column="helper_birth"/>
+        <result property="helper_alaram" column="helper_alaram"/>
+        <result property="helper_location" column="helper_location"/>
+        <result property="helper_info" column="helper_info"/>
+        <result property="helper_status" column="helper_status"/>
+
+    </resultMap>
+
+    <resultMap id="motherResult" type="MotherVO">
+
+        <id property="mother_id" column="mother_id"/>
+        <result property="helper_id" column="helper_id"/>
+        <result property="mother_obHospital_name" column="mother_obHospital_name"/>
+        <result property="mother_obHospital_tel" column="mother_obHospital_tel"/>
+        <result property="mother_babyName" column="mother_babyName"/>
+        <result property="mother_due_date" column="mother_due_date"/>
+        <result property="mother_d_day" column="mother_d_day"/>
+        <result property="mother_info" column="mother_info"/>
+        <result property="mother_emergency_alaram" column="mother_emergency_alaram"/>
+        <!-- 오늘의 상태 컬럼 -->
+        <result property="report_date" column="report_date" />
+        <result property="general_status" column="general_status" />
+        <result property="status_detail" column="status_detail" />
+        <!-- 개인 검진 일지 컬럼 -->
+        <!--        <result property="prescription" column="prescription" />--><!-- 얘 있으면 오류 -->
+        <result property="hospital_name" column="hospital_name" />
+        <result property="medicine_name" column="medicine_name" />
+        <result property="visited_date" column="visited_date" />    <!-- 병원 방문 일자 -->
+        <result property="result" column="result" />    <!--방문 진단 결과-->
+        <result property="condition_detail" column="condition_detail" />     <!--방문 진단 자세한 결과-->
+        <!-- invite_list 테이블의 컬럼 -->
+        <result property="accept" column="accept" />
+        <!-- button_list 테이블의 컬럼 -->
+        <result property="whenToClick" column="whenToClick" /> <!--언제 버튼을 눌렀는지-->
+        <result property="nickname" column="nickname" />
+        <result property="nicknameOfHelper" column="nicknameOfHelper" />
+        <result property="relation" column="relation" />
+
+        <result property="helper_password" column="helper_password"/>
+        <result property="helper_name" column="helper_name"/>
+        <result property="helper_email" column="helper_email"/>
+        <result property="helper_tel" column="helper_tel"/>
+        <result property="helper_address" column="helper_address"/>
+        <result property="helper_address_detail" column="helper_address_detail"/>
+        <result property="helper_birth" column="helper_birth"/>
+        <result property="helper_alaram" column="helper_alaram"/>
+        <result property="helper_location" column="helper_location"/>
+        <result property="helper_info" column="helper_info"/>
+        <result property="helper_status" column="helper_status"/>
+        <result property="num" column="num"/>
+        <result property="searchKeyword" column="searchKeyword"/>
+        <result property="month" column="month"/>
+        <result property="month_count" column="month_count" javaType="int"/>
+
+        <result property="pro_report_date" column="pro_report_date"/>
+        <result property="pro_general_status" column="pro_general_status"/>
+        <result property="pro_status_detail" column="pro_status_detail"/>
+
+    </resultMap>
+
+    <select id="preventTooManyResultsExceptionWhenEnterIntoMotherMainPageDueToEmergencyAlaram" parameterType="MotherVO" resultType="int">
+        select mother_emergency_alaram from mother where mother_id = #{mother_id} and mother_emergency_alaram > 0;
+    </select>
+
+    <select id="getMotherVO" resultMap="motherResult">
+        select m.mother_id, m.mother_d_day, h.helper_name from mother m join helper h on m.helper_id = h.helper_id where h.helper_status = 1 order by mother_d_day desc;
+    </select>
+
+    <select id="getBBtnStatus" resultMap="motherResult">
+        select distinct b.mother_id, h.helper_name, m.mother_emergency_alaram from mother m join B_button_list b on b.mother_id = m.mother_id join helper h on h.helper_id = m.helper_id where m.mother_emergency_alaram = 2;
+    </select>
+
+    <select id="getABtnStatus" resultMap="motherResult">
+        select distinct a.mother_id, h.helper_name, m.mother_emergency_alaram from mother m join A_button_list a on a.mother_id = m.mother_id join helper h on h.helper_id = m.helper_id where m.mother_emergency_alaram = 1;
+    </select>
+
+    <select id="mother_mainPageInfo" resultType="MotherVO" parameterType="MotherVO">
+        select distinct
+            h.helper_id, h.helper_name, h.helper_birth, m.mother_babyName, m.mother_due_date, m.mother_d_day, m.mother_obHospital_name, m.mother_obHospital_tel
+        from helper h, mother m where h.helper_id = m.mother_id and m.mother_id = #{mother_id};
+    </select>
+
+    <select id="mother_mainPageHelperList" resultMap="motherResult" parameterType="MotherVO">
+        SELECT
+            subquery.helper_id,
+            subquery.mother_id,
+            subquery.nicknameOfHelper,
+            subquery.relation,
+            subquery.locationallowmth,
+            h.helper_name,
+            h.helper_tel
+        FROM
+            (
+                SELECT helper_id, mother_id, nicknameOfHelper, relation, locationallowmth FROM connection_list_htm WHERE mother_id = #{mother_id}
+                UNION ALL
+                SELECT helper_id, mother_id, nicknameOfHelper, relation, locationallowmth FROM connection_list_mth WHERE mother_id = #{mother_id}
+            ) AS subquery
+                LEFT JOIN
+            helper h ON h.helper_id = subquery.helper_id;
+
+    </select>
+
+
+    <select id="mother_mainPageHelperListSearchKeyword" resultMap="motherResult" parameterType="MotherVO">
+        SELECT distinct
+            h.helper_id,
+            h.helper_name,
+            h.helper_tel,
+            clHTM.nicknameOfHelper as nicknameOfHelper,
+            clHTM.relation AS relationHTM,
+            clMTH.nicknameOfHelper as nicknameOfHelper,
+            clMTH.relation AS relationMTH
+        FROM
+            helper h
+                LEFT JOIN
+            connection_list_HTM clHTM ON clHTM.helper_id = h.helper_id AND clHTM.mother_id = #{mother_id}
+                LEFT JOIN
+            connection_list_MTH clMTH ON clMTH.helper_id = h.helper_id AND clMTH.mother_id = #{mother_id}
+        WHERE
+            (clHTM.mother_id IS NOT NULL OR clMTH.mother_id IS NOT NULL)
+          AND (h.helper_name like concat('%', #{searchKeyword}, '%')
+            OR clMTH.nicknameOfHelper like concat('%', #{searchKeyword}, '%') OR clHTM.nicknameOfHelper like concat('%', #{searchKeyword}, '%'));
+    </select>
+
+
+    <select id="getConnectionListhtm" parameterType="MotherVO" resultType="MotherVO">
+        select helper_id from connection_list_htm where mother_id = #{mother_id} and helper_id= #{helper_id};
+    </select>
+    <select id="getConnectionListmth" parameterType="MotherVO" resultType="MotherVO">
+        select helper_id from connection_list_mth where mother_id = #{mother_id} and helper_id= #{helper_id};
+    </select>
+
+    <update id="updateNicknameRelationByhtm" parameterType="MotherVO">
+        UPDATE connection_list_htm SET nicknameOfHelper = #{nicknameOfHelper}, relation = #{relation} WHERE helper_id = #{helper_id} and mother_id= #{mother_id};
+    </update>
+
+    <update id="updateNicknameRelationBymth" parameterType="MotherVO">
+        UPDATE connection_list_mth SET nicknameOfHelper = #{nicknameOfHelper}, relation = #{relation} WHERE helper_id = #{helper_id} and mother_id= #{mother_id};
+    </update>
+
+
+
+
+    <delete id="helpers_list_delete1" parameterType="MotherVO">
+        DELETE FROM connection_list_MTH
+        WHERE helper_id = #{helper_id} AND mother_id = #{mother_id};
+    </delete>
+
+    <delete id="helpers_list_delete2" parameterType="MotherVO">
+        DELETE FROM connection_list_HTM
+        WHERE helper_id = #{helper_id} and mother_id = #{mother_id};
+    </delete>
+
+
+
+    <select id="mother_mainPageHelperNum" resultType="int" parameterType="MotherVO">
+        SELECT COUNT(*) as num
+        FROM
+            (
+                (SELECT helper_id, mother_id FROM connection_list_HTM)
+                UNION
+                (SELECT helper_id, mother_id FROM connection_list_MTH)
+            ) AS union_table
+        WHERE
+            union_table.mother_id = #{mother_id};
+    </select>
+
+    <select id="helpers_invite_list" resultMap="motherResult" parameterType="MotherVO">
+        select distinct h.helper_id, h.helper_name, h.helper_tel, ilHTM.helper_id, ilHTM.mother_id from helper h
+           join invite_list_HTM ilHTM on h.helper_id = ilHTM.helper_id
+           join mother m on m.mother_id = ilHTM.mother_id
+           where ilHTM.mother_id = #{mother_id} and accept = 0;
+    </select>
+
+    <select id="helpers_list_show_inHTM" parameterType="MotherVO" resultType="int">
+        select count(helper_id) from invite_list_HTM where accept = 0 and mother_id = #{mother_id};
+    </select>
+
+    <update id="invite_list_accept_invitation" parameterType="MotherVO">
+        update invite_list_HTM set accept = 1 where helper_id = #{helper_id} and mother_id = #{mother_id} and accept = 0;
+    </update>
+
+    <delete id="after_invite_list_accept_invitation_to_delete_record_from_invite_list_HTM" parameterType="MotherVO">
+        delete from invite_list_HTM where accept = 1 and helper_id = #{helper_id} and mother_id = #{mother_id};
+    </delete>
+
+    <delete id="invite_HTM_refuse" parameterType="MotherVO">
+        delete from invite_list_HTM where accept = 0 and helper_id = #{helper_id} and mother_id = #{mother_id};
+    </delete>
+
+    <select id="helpers_add_searchKeyword" resultMap="motherResult">
+        select helper_id, helper_name, helper_tel from helper where helper_name = #{searchKeyword} or helper_tel = #{searchKeyword};
+    </select>
+
+    <insert id="helpers_add_helper" parameterType="MotherVO">
+        insert into invite_list_MTH (mother_id, helper_id) values (#{mother_id}, #{helper_id});
+    </insert>
+
+    <select id="helpers_list_add_chk_duplicatedId" resultMap="motherResult" parameterType="MotherVO">
+        select h.helper_id, h.helper_name, h.helper_tel from helper h
+        join connection_list_HTM clHTM on h.helper_id = clHTM.helper_id where clHTM.mother_id = #{mother_id} and H.helper_tel = #{searchKeyword}
+        union
+        select h.helper_id, h.helper_name, h.helper_tel from helper h
+        join connection_list_MTH clMTH on h.helper_id = clMTH.helper_id where clMTH.mother_id = #{mother_id} and H.helper_tel = #{searchKeyword};
+    </select>
+
+    <select id="helpers_duplicatedId" parameterType="MotherVO" resultType="MotherVO">
+        select h.helper_id, h.helper_name, h.helper_tel from helper h
+        join connection_list_HTM clHTM on h.helper_id = clHTM.helper_id where clHTM.mother_id = #{mother_id} and H.helper_tel = #{searchKeyword}
+        union
+        select h.helper_id, h.helper_name, h.helper_tel from helper h
+        join connection_list_MTH clMTH on h.helper_id = clMTH.helper_id where clMTH.mother_id = #{mother_id} and H.helper_tel = #{searchKeyword};
+    </select>
+
+    <select id="helpers_list_add_chk_addedId" resultMap="motherResult" parameterType="MotherVO">
+        select h.helper_id, h.helper_name, h.helper_tel from helper h
+        join invite_list_HTM clHTM on h.helper_id = clHTM.helper_id where clHTM.mother_id = #{mother_id} and H.helper_tel = #{searchKeyword}
+        union
+        select h.helper_id, h.helper_name, h.helper_tel from helper h
+        join invite_list_MTH clMTH on h.helper_id = clMTH.helper_id where clMTH.mother_id = #{mother_id} and H.helper_tel = #{searchKeyword};
+    </select>
+
+    <select id="helpers_addedId" parameterType="MotherVO" resultType="MotherVO">
+        select h.helper_id, h.helper_name, h.helper_tel from helper h
+        join invite_list_HTM clHTM on h.helper_id = clHTM.helper_id where clHTM.mother_id = #{mother_id} and H.helper_tel = #{searchKeyword}
+        union
+        select h.helper_id, h.helper_name, h.helper_tel from helper h
+        join invite_list_MTH clMTH on h.helper_id = clMTH.helper_id where clMTH.mother_id = #{mother_id} and H.helper_tel = #{searchKeyword};
+    </select>
+
+    <select id="helpers_add_helper_list" resultMap="motherResult">
+        select distinct h.helper_id, h.helper_name, h.helper_tel, ilMTH.helper_id, ilMTH.mother_id from helper h
+        join invite_list_MTH ilMTH on h.helper_id = ilMTH.helper_id
+        join mother m on m.mother_id = ilMTH.mother_id
+        where ilMTH.mother_id = #{mother_id} and accept = 0;
+    </select>
+
+    <delete id="helpers_add_cancel" parameterType="MotherVO">
+        delete from invite_list_MTH where mother_id = #{mother_id} and helper_id = #{helper_id} and accept = 0;
+    </delete>
+
+    <update id="AButtonClick" parameterType="MotherVO">
+        update mother set mother_emergency_alaram = 1 where mother_id = #{mother_id};
+    </update>
+
+    <select id="A_status_check" parameterType="MotherVO" resultType="MotherVO">
+        select mother_id from a_button_list where mother_id = #{mother_id};
+    </select>
+
+    <delete id="release_A_status" parameterType="MotherVO">
+        delete from A_button_list where mother_id = #{mother_id};
+    </delete>
+
+    <update id="BButtonClick" parameterType="MotherVO">
+        update mother set mother_emergency_alaram = 2 where mother_id = #{mother_id};
+    </update>
+
+    <select id="B_status_check" parameterType="MotherVO" resultType="MotherVO">
+        select mother_id from b_button_list where mother_id = #{mother_id};
+    </select>
+
+    <delete id="release_B_status" parameterType="MotherVO">
+        delete from B_button_list where mother_id = #{mother_id};
+    </delete>
+
+    <!-- mother_daily_report 부분 -->
+    <select id="mother_daily_report_info" resultMap="motherResult">
+        select
+            h.helper_name, h.helper_birth, h.helper_id,
+            mdr.report_date, mdr.general_status, mdr.status_detail
+        from mother m
+                 left join helper h on h.helper_id = m.mother_id
+                 left join mother_daily_report mdr on mdr.mother_id = m.mother_id
+        where mdr.mother_id = #{mother_id} order by report_date desc;
+    </select>
+
+    <select id="mother_daily_report_month_count" resultMap="motherResult">
+        SELECT
+            SUBSTRING(report_date, 1, 7) AS month,
+            COUNT(*) AS month_count
+        FROM mother_daily_report WHERE mother_id = #{mother_id}
+        GROUP BY SUBSTRING(report_date, 1, 7)
+        ORDER BY month DESC;
+    </select>
+
+    <insert id="mother_daily_report_insert" parameterType="MotherVO">
+        insert into mother_daily_report (mother_id, report_date, general_status, status_detail) value (#{mother_id}, #{report_date}, #{general_status}, #{status_detail});
+    </insert>
+
+    <update id="mother_daily_report_update" parameterType="MotherVO">
+        update mother_daily_report set report_date = #{report_date}, general_status = #{general_status}, status_detail = #{status_detail}
+        where mother_id = #{mother_id} and report_date = #{pre_report_date} and general_status = #{pre_general_status} and status_detail = #{pre_status_detail};
+    </update>
+
+    <delete id="mother_daily_report_delete" parameterType="MotherVO">
+        delete from mother_daily_report where mother_id = #{mother_id} and report_date = #{pre_report_date} and general_status = #{pre_general_status} and status_detail = #{pre_status_detail};
+    </delete>
+
+    <!-- 산모 검진일지 부분 -->
+    <select id="mother_health_report" parameterType="MotherVO" resultMap="motherResult">
+        select * from mother_health_report where mother_id = #{mother_id};
+    </select>
+
+    <!-- A 버튼 상황 발동 시 문자 보낼 전화번호 추출 -->
+    <select id="selectHelper_tel_When_A_status" parameterType="MotherVO" resultMap="motherResult">
+        SELECT h.helper_id, h.helper_name, h.helper_tel
+        FROM helper h
+                 INNER JOIN connection_list_HTM clHTM ON clHTM.helper_id = h.helper_id
+                 INNER JOIN A_Button_list abl ON abl.mother_id = clHTM.mother_id
+        WHERE abl.mother_id = #{mother_id}
+        UNION
+        SELECT h.helper_id, h.helper_name, h.helper_tel
+        FROM helper h
+                 INNER JOIN connection_list_MTH clMTH ON clMTH.helper_id = h.helper_id
+                 INNER JOIN A_Button_list abl ON abl.mother_id = clMTH.mother_id
+        WHERE abl.mother_id = #{mother_id};
+    </select>
+
+    <!-- B 버튼 상황 발동 시 문자 보낼 전화번호 추출 -->
+    <select id="selectHelper_tel_When_B_status" parameterType="MotherVO" resultMap="motherResult">
+        SELECT h.helper_id, h.helper_name, h.helper_tel
+        FROM helper h
+                 INNER JOIN connection_list_HTM clHTM ON clHTM.helper_id = h.helper_id
+                 INNER JOIN B_Button_list bbl ON bbl.mother_id = clHTM.mother_id
+        WHERE bbl.mother_id = #{mother_id}
+        UNION
+        SELECT h.helper_id, h.helper_name, h.helper_tel
+        FROM helper h
+                 INNER JOIN connection_list_MTH clMTH ON clMTH.helper_id = h.helper_id
+                 INNER JOIN B_Button_list bbl ON bbl.mother_id = clMTH.mother_id
+        WHERE bbl.mother_id = #{mother_id};
+    </select>
+
+</mapper>

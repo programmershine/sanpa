@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+
+<mapper namespace="ConnectionDAO_mybatis">
+
+    <resultMap id="connectionResult" type="ConnectionVO">
+
+        <id property="helper_id" column="helper_id"/>
+        <id property="mother_id" column="mother_id"/>
+        <result property="helper_id" column="helper_id"/>
+        <result property="mother_id" column="mother_id"/>
+        <result property="nicknameOfHelper" column="nicknameOfHelper"/>
+        <result property="relation" column="relation"/>
+        <result property="locationallowmth" column="locationallowmth"/>
+        <result property="locationallowhtm" column="locationallowhtm"/>
+
+
+    </resultMap>
+
+    <!-- update페이지에 미리 데이터를 뿌려놓기 -->
+
+    <select id="connection_getListUnion" parameterType="ConnectionVO" resultType="ConnectionVO">
+        SELECT ch.helper_id as helper_id, ch.mother_id as mother_id, h1.helper_name AS mother_name, ch.nicknameOfHelper as nicknameOfHelper, ch.relation as relation, ch.locationallowmth as locationallowmth, ch.locationallowhtm as locationallowhtm
+        FROM connection_list_htm AS ch
+                 JOIN helper AS h1 ON ch.helper_id = h1.helper_id
+        WHERE ch.mother_id = #{mother_id}
+        UNION ALL
+        SELECT cm.helper_id as helper_id, cm.mother_id as mother_id, h2.helper_name AS mother_name, cm.nicknameOfHelper as nicknameOfHelper, cm.relation as relation,  cm.locationallowmth as locationallowmth, cm.locationallowhtm as locationallowhtm
+        FROM connection_list_mth AS cm
+                 JOIN helper AS h2 ON cm.helper_id = h2.helper_id
+        WHERE cm.mother_id = #{mother_id};
+
+    </select>
+
+
+    <!--커넥션 테이블명을 조회하여 반환하는 쿼리 -->
+    <select id="selectTableName" resultType="string">
+        SELECT 'connection_list_htm' AS connection_list_htm
+        FROM connection_list_htm
+        WHERE helper_id = #{helper_id} AND mother_id = #{mother_id}
+
+        UNION ALL
+
+        SELECT 'connection_list_mth' AS connection_list_mth
+        FROM connection_list_mth
+        WHERE helper_id = #{helper_id} AND mother_id = #{mother_id}
+    </select>
+
+    <!-- 특정 테이블의 locationallowhtm 값을 업데이트하는 쿼리 -->
+    <update id="updateLocationAllowHtm" parameterType="ConnectionVO">
+        UPDATE ${tableName}
+        SET locationallowhtm = #{locationallowhtm}
+        WHERE helper_id = #{helper_id} AND mother_id = #{mother_id}
+    </update>
+    <update id="updateLocationAllowMth" parameterType="ConnectionVO">
+        UPDATE ${tableName}
+        SET locationallowmth = #{locationallowmth}
+        WHERE helper_id = #{helper_id} AND mother_id = #{mother_id}
+    </update>
+
+    <select id="connection_getMotherListNameUnion" parameterType="ConnectionVO" resultType="ConnectionVO">
+        SELECT ch.helper_id as helper_id, ch.mother_id as mother_id, h1.helper_name AS mother_name, ch.nicknameOfHelper as nicknameOfHelper, ch.relation as relation, ch.locationallowmth as locationallowmth, ch.locationallowhtm as locationallowhtm
+        FROM connection_list_htm AS ch
+                 JOIN helper AS h1 ON ch.mother_id = h1.helper_id
+        WHERE ch.helper_id = #{helper_id}
+        UNION ALL
+        SELECT cm.helper_id as helper_id, cm.mother_id as mother_id, h2.helper_name AS mother_name, cm.nicknameOfHelper as nicknameOfHelper, cm.relation as relation,  cm.locationallowmth as locationallowmth, cm.locationallowhtm as locationallowhtm
+        FROM connection_list_mth AS cm
+                 JOIN helper AS h2 ON cm.mother_id = h2.helper_id
+        WHERE cm.helper_id = #{helper_id};
+    </select>
+
+
+</mapper>

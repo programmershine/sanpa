@@ -1,0 +1,18 @@
+#AWS S3 이미지
+cloud:
+  aws:
+    s3:
+      bucket: sanpaimgstorage5555
+    credentials:
+      access-key: AKIA4MTWHXGWFR6NEWF5
+      secret-key: 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
+    region:
+      static: ap-northeast-2
+      auto: false
+    stack:
+      auto: false
+spring:
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB

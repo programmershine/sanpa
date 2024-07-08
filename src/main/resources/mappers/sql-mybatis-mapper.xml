@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="Non_HelperDAO_mybatis">
+
+
+    <resultMap id="helperResult" type="HelperVO">
+
+        <id property="helper_id" column="helper_id"/>
+        <result property="helper_password" column="helper_password"/>
+        <result property="helper_name" column="helper_name"/>
+        <result property="helper_email" column="helper_email"/>
+        <result property="helper_tel" column="helper_tel"/>
+        <result property="helper_address" column="helper_address"/>
+        <result property="helper_address_detail" column="helper_address_detail"/>
+        <result property="helper_address_postcode" column="helper_address_postcode"/>
+        <result property="helper_birth" column="helper_birth"/>
+        <result property="helper_alaram" column="helper_alaram"/>
+        <result property="helper_location" column="helper_location"/>
+        <result property="helper_info" column="helper_info"/>
+        <result property="helper_status" column="helper_status"/>
+
+        <result property="mother_babyName" column="mother_babyName"/>
+        <result property="mother_id" column="mother_id"/>
+
+        <!--mother-->
+        <result property="mother_due_date" column="mother_due_date"/>
+        <result property="mother_d_day" column="mother_d_day" />
+
+        <!-- mother_daily_report -->
+        <result property="general_status" column="general_status"/>
+        <!-- mother_health_report-->
+        <result property="hospital_name" column="hospital_name"/>
+        <result property="medicine_name" column="medicine_name"/>
+        <result property="visited_date" column="visited_date"/>
+
+        <result property="buttonType" column="button_type"/>
+
+
+    </resultMap>
+
+    <resultMap id="motherResult" type="MotherVO">
+
+        <result property="mother_id" column="mother_id"/>
+        <result property="mother_babyName" column="mother_babyName"/>
+        <result property="mother_due_date" column="mother_due_date"/>
+        <result property="mother_d_day" column="mother_d_day"/>
+        <result property="mother_info" column="mother_info"/>
+        <result property="mother_emergency_alaram" column="mother_emergency_alaram"/>
+        <result property="mother_obHospital_name" column="mother_obHospital_name"/>
+        <result property="mother_obHospital_tel" column="mother_obHospital_tel"/>
+
+    </resultMap>
+
+    <!-- 로그인 -->
+    <select id="login" parameterType="HelperVO" resultType="HelperVO">
+        select * from helper where helper_id = #{helper_id} and helper_password = #{helper_password};
+    </select>
+
+    <!-- 아이디 중복 검사 -->
+    <select id="checkDuplicationIdWhenInsertHelper" parameterType="HelperVO" resultType="HelperVO">
+        select helper_id from helper where helper_id = #{helper_id};
+    </select>
+
+    <!-- 아이디 찾기 -->
+    <select id="findId" parameterType="HelperVO" resultType="HelperVO">
+        select helper_id from helper where helper_name = #{helper_name} and helper_email = #{helper_email};
+    </select>
+
+
+    <!-- 헬퍼로 회원가입 -->
+    <insert id="insertHelper" parameterType="HelperVO">
+        insert into helper(helper_id, helper_password, helper_name, helper_email, helper_tel, helper_address, helper_address_detail, helper_birth, helper_alaram, helper_location, helper_info, helper_status, helper_address_postcode)
+        values (#{helper_id}, #{helper_password}, #{helper_name}, #{helper_email}, #{helper_tel}, #{helper_address}, #{helper_address_detail}, #{helper_birth}, #{helper_alaram}, #{helper_location}, #{helper_info}, #{helper_status}, #{helper_address_postcode});
+    </insert>
+
+    <!-- 산모 프리미엄 가입 -->
+    <insert id="insertMother" parameterType="MotherVO">
+        update mother set mother_babyName = #{mother_babyName}, mother_due_date = #{mother_due_date}, mother_info = #{mother_info}, mother_obHospital_name = #{mother_obHospital_name}, mother_obHospital_tel = #{mother_obHospital_tel} where mother_id = #{mother_id};
+    </insert>
+
+    <!-- 비밀번호 찾기 -->
+    <select id="getEmailFromId" parameterType="HelperVO" resultType="HelperVO">
+        select helper_email from helper where helper_id = #{helper_id};
+    </select>
+
+    <!-- 사용자의 이메일로 비밀번호 변경 -->
+    <update id="changePassword" parameterType="HelperVO">
+        update helper set helper_password = #{helper_password} where helper_email = #{helper_email};
+    </update>
+
+    <!--헬퍼아이디로 산모정보 가져오기-->
+    <select id="findMotherByHelperId" parameterType="MotherVO" resultType="MotherVO">
+        select * from mother where helper_id = #{helper_id};
+    </select>
+
+    <!--친구요청 거절-->
+    <delete id="deleteInvite" parameterType="HelperVO">
+        delete from invite_list_mth where helper_id=#{helper_id} and mother_id=#{mother_id}
+    </delete>
+
+    <!--친구요청 수락 후 invite 삭제처리-->
+    <delete id="deleteAfterAccept" parameterType="HelperVO">
+        delete from invite_list_mth where helper_id=#{helper_id}
+                                      and mother_id=#{mother_id};
+    </delete>
+
+    <!--invite 테이블 수락처리-->
+    <update id="acceptInvite" parameterType="HelperVO">
+        update invite_list_mth set accept=1
+        where helper_id=#{helper_id} and mother_id=#{mother_id};
+    </update>
+
+    <!--invite_list 테이블에 중복값이 없는지 확인-->
+    <select id="isExistInvite" resultType="int" parameterType="HelperVO">
+        SELECT CASE WHEN
+                        (SELECT COUNT(*) FROM invite_list_mth WHERE helper_id = #{helper_id} AND mother_id = #{mother_id}) > 0 OR
+                        (SELECT COUNT(*) FROM invite_list_htm WHERE helper_id = #{helper_id} AND mother_id = #{mother_id}) > 0
+                        THEN 1 ELSE 0 END;
+    </select>
+    <!--친구등록 요청-->
+    <insert id="addInvitation" parameterType="HelperVO">
+        insert into invite_list_htm (helper_id, mother_id)
+        values (#{helper_id},#{mother_id})
+    </insert>
+
+    <!--받은요청 조회-->
+    <select id="invitationList" resultMap="helperResult" parameterType="HelperVO">
+        SELECT h.helper_name, h.helper_tel, m.mother_id
+        FROM helper h
+                 JOIN invite_list_mth i ON h.helper_id = i.mother_id
+                 JOIN mother m ON i.mother_id = m.mother_id
+        WHERE i.helper_id = #{helper_id} AND i.accept = 0
+        order by m.mother_id asc
+    </select>
+    <!--친구삭제하기는 친구조회, 친구삭제-->
+    <!--산모 목록에서 helper_id, mother_id로 삭제하기-->
+    <select id="isExistInConnectionListHtm" parameterType="HelperVO" resultType="int">
+        SELECT COUNT(*) FROM connection_list_htm
+        WHERE helper_id = #{helper_id} AND mother_id = #{mother_id}
+    </select>
+    <select id="isExistInConnectionListMth" parameterType="HelperVO" resultType="int">
+        SELECT COUNT(*) FROM connection_list_mth
+        WHERE helper_id = #{helper_id} AND mother_id = #{mother_id}
+    </select>
+    <delete id="deleteSanmoListFromHtm" parameterType="HelperVO">
+        DELETE FROM connection_list_htm
+        WHERE helper_id = #{helper_id} AND mother_id = #{mother_id}
+    </delete>
+
+    <delete id="deleteSanmoListFromMth" parameterType="HelperVO">
+        DELETE FROM connection_list_mth
+        WHERE helper_id = #{helper_id} AND mother_id = #{mother_id}
+    </delete>
+
+    <!-- 전화번호로 특정 산모 검색 -->
+    <select id="getSanmoByPhoneNumber" resultMap="helperResult" parameterType="HelperVO">
+        SELECT h.helper_name, h.helper_tel, m.mother_due_date,m.mother_id
+        FROM helper h
+                 JOIN mother m ON h.helper_id = m.helper_id
+        WHERE h.helper_tel = #{helper_tel} AND h.helper_status = 1
+    </select>
+
+    <!--등록된 산모목록 조회-->
+    <select id="getSanmoList" resultMap="helperResult" parameterType="HelperVO">
+        SELECT
+            h.helper_id,
+            cl.mother_id,
+            cl.locationallowhtm,
+            cl.locationallowmth,
+            h.helper_name,
+            h.helper_alaram,
+            h.helper_location,
+            h.helper_status,
+            mdr.general_status,
+            mhr.hospital_name,
+            mhr.medicine_name,
+            mhr.visited_date
+        FROM connection_list_htm cl
+                 INNER JOIN Helper h ON cl.helper_id = h.helper_id
+                 LEFT JOIN (
+            SELECT mother_id, MAX(report_date) AS max_report_date
+            FROM mother_daily_report
+            GROUP BY mother_id
+        ) latest_mdr ON cl.mother_id = latest_mdr.mother_id
+                 LEFT JOIN mother_daily_report mdr ON cl.mother_id = mdr.mother_id AND mdr.report_date = latest_mdr.max_report_date
+                 LEFT JOIN (
+            SELECT mother_id, MAX(visited_date) AS max_visited_date
+            FROM mother_health_report
+            GROUP BY mother_id
+        ) latest_mhr ON cl.mother_id = latest_mhr.mother_id
+                 LEFT JOIN mother_health_report mhr ON cl.mother_id = mhr.mother_id AND mhr.visited_date = latest_mhr.max_visited_date
+        WHERE h.helper_id = #{helper_id}
+
+        UNION
+
+        SELECT
+            h.helper_id,
+            cl.mother_id,
+            cl.locationallowhtm,
+            cl.locationallowmth,
+            h.helper_name,
+            h.helper_alaram,
+            h.helper_location,
+            h.helper_status,
+            mdr.general_status,
+            mhr.hospital_name,
+            mhr.medicine_name,
+            mhr.visited_date
+        FROM connection_list_mth cl
+                 INNER JOIN Helper h ON cl.helper_id = h.helper_id
+                 LEFT JOIN (
+            SELECT mother_id, MAX(report_date) AS max_report_date
+            FROM mother_daily_report
+            GROUP BY mother_id
+        ) latest_mdr ON cl.mother_id = latest_mdr.mother_id
+                 LEFT JOIN mother_daily_report mdr ON cl.mother_id = mdr.mother_id AND mdr.report_date = latest_mdr.max_report_date
+                 LEFT JOIN (
+            SELECT mother_id, MAX(visited_date) AS max_visited_date
+            FROM mother_health_report
+            GROUP BY mother_id
+        ) latest_mhr ON cl.mother_id = latest_mhr.mother_id
+                 LEFT JOIN mother_health_report mhr ON cl.mother_id = mhr.mother_id AND mhr.visited_date = latest_mhr.max_visited_date
+        WHERE h.helper_id = #{helper_id};
+    </select>
+
+    <!--이멀전시 버튼 조회-->
+    <select id="getButtonList" resultMap="helperResult" parameterType="HelperVO">
+        SELECT
+            mother.mother_id,
+            mother.mother_due_date,
+            mother.mother_d_day,
+            CASE
+                WHEN connection_list_htm.mother_id IN (SELECT mother_id FROM A_button_list) THEN 'A'
+                WHEN connection_list_htm.mother_id IN (SELECT mother_id FROM B_button_list) THEN 'B'
+                ELSE NULL
+                END AS button_type
+        FROM
+            connection_list_htm
+                JOIN
+            helper ON connection_list_htm.helper_id = helper.helper_id
+                JOIN
+            mother ON connection_list_htm.mother_id = mother.mother_id
+        WHERE
+            connection_list_htm.helper_id = #{helper_id}
+          AND connection_list_htm.mother_id IN (
+            SELECT mother_id
+            FROM A_button_list
+            UNION
+            SELECT mother_id
+            FROM B_button_list
+        );
+    </select>
+    <!--mother_name 가져오기 위한 쿼리문-->
+    <select id="getMotherName" resultMap="helperResult" parameterType="HelperVO">
+        select helper_name from helper where helper_id=#{helper_id}
+    </select>
+
+    <delete id="dismissSanpa" parameterType="HelperVO">
+        delete from helper where helper_id = #{helper_id};
+    </delete>
+
+</mapper>
